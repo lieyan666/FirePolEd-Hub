@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FirePolEd-Hub - 作业收交平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/public/css/material.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="material-icons">school</i>
+                    <h1>FirePolEd-Hub</h1>
+                </div>
+                <p class="subtitle">智能作业收交平台</p>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="welcome-section">
+                <div class="card">
+                    <div class="card-content">
+                        <h2>欢迎使用 FirePolEd-Hub</h2>
+                        <p>一个现代化的在线作业管理系统，为教师和学生提供便捷的作业创建、分发和提交功能。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <div class="action-cards">
+                    <div class="card action-card" onclick="location.href='/admin'">
+                        <div class="card-content">
+                            <i class="material-icons">admin_panel_settings</i>
+                            <h3>管理后台</h3>
+                            <p>创建和管理作业，查看学生提交情况和统计数据</p>
+                            <button class="btn btn-primary">进入管理后台</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card action-card">
+                        <div class="card-content">
+                            <i class="material-icons">assignment</i>
+                            <h3>学生答题</h3>
+                            <p>输入作业链接或ID开始答题</p>
+                            <div class="input-group">
+                                <input type="text" id="assignmentInput" placeholder="请输入作业ID或完整链接" class="form-control">
+                                <button class="btn btn-primary" onclick="goToAssignment()">开始答题</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="features-section">
+                <div class="card">
+                    <div class="card-content">
+                        <h3>平台特色</h3>
+                        <div class="features-grid">
+                            <div class="feature-item">
+                                <i class="material-icons">create</i>
+                                <h4>灵活题型</h4>
+                                <p>支持单选、多选、简答等多种题型</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="material-icons">analytics</i>
+                                <h4>实时统计</h4>
+                                <p>实时查看提交情况和答题统计</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="material-icons">devices</i>
+                                <h4>响应式设计</h4>
+                                <p>完美适配各种设备和屏幕尺寸</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="material-icons">security</i>
+                                <h4>数据安全</h4>
+                                <p>本地存储，数据安全可靠</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 FirePolEd-Hub. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#">帮助文档</a>
+                    <a href="#">联系我们</a>
+                    <a href="#">隐私政策</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="/public/js/common.js"></script>
+    <script>
+        function goToAssignment() {
+            const input = document.getElementById('assignmentInput');
+            const value = input.value.trim();
+            
+            if (!value) {
+                showMessage('请输入作业ID或链接', 'error');
+                return;
+            }
+            
+            // 提取作业ID
+            let assignmentId = value;
+            if (value.includes('/student/assignment/')) {
+                assignmentId = value.split('/student/assignment/')[1].split('?')[0].split('#')[0];
+            } else if (value.includes('/student/')) {
+                assignmentId = value.split('/student/')[1].split('?')[0].split('#')[0];
+            }
+            
+            if (assignmentId) {
+                window.location.href = `/student/assignment/${assignmentId}`;
+            } else {
+                showMessage('无效的作业ID或链接', 'error');
+            }
+        }
+        
+        // 回车键提交
+        document.getElementById('assignmentInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                goToAssignment();
+            }
+        });
+    </script>
+</body>
+</html>

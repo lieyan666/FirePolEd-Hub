@@ -137,3 +137,49 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# ===== FirePolEd-Hub 项目特定配置 =====
+
+# 配置文件（包含敏感信息）
+config.json
+
+# 数据库和数据文件
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 上传文件目录
+uploads/
+temp/
+
+# 日志文件
+logs/
+*.log
+
+# 会话存储
+sessions/
+
+# 备份文件
+backup/
+*.backup
+
+# 临时文件
+.tmp/
+temp/
+
+# IDE 和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

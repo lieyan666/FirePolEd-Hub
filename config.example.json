@@ -1,0 +1,26 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "localhost"
+  },
+  "admin": {
+    "password": "your_admin_password_here",
+    "sessionTimeout": 3600000
+  },
+  "data": {
+    "assignmentsIndex": "./data/assignments-index.json",
+    "assignmentsDir": "./data/assignments/",
+    "submissionsDir": "./data/submissions/",
+    "classesFile": "./data/classes.json"
+  },
+  "ui": {
+    "primaryColor": "#018eee",
+    "theme": "material"
+  },
+  "features": {
+    "maxFileSize": "10MB",
+    "allowedFileTypes": [".jpg", ".png", ".pdf", ".doc", ".docx"],
+    "autoSave": true,
+    "autoSaveInterval": 30000
+  }
+}

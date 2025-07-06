@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学生答题 - 作业提交平台</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/material.css">
+  <link rel="stylesheet" href="/public/css/common.css">
+  <link rel="stylesheet" href="/public/css/student.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <h1 class="header-title">
+          <i class="material-icons">assignment</i>
+          作业提交平台
+        </h1>
+        <div class="header-subtitle">学生答题</div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Loading State -->
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        <p>正在加载作业...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="error-state" style="display: none;">
+        <div class="error-content">
+          <i class="material-icons">error_outline</i>
+          <h2>加载失败</h2>
+          <p id="error-message">无法加载作业信息，请检查链接是否正确。</p>
+          <button class="btn btn-primary" onclick="location.reload()">
+            <i class="material-icons">refresh</i>
+            重新加载
+          </button>
+        </div>
+      </div>
+
+      <!-- Student Info Form -->
+      <div id="student-info-section" class="student-info-section" style="display: none;">
+        <div class="card">
+          <div class="card-content">
+            <h2>学生信息</h2>
+            <p class="text-secondary">请填写您的基本信息后开始答题</p>
+            
+            <form id="student-info-form">
+              <div class="form-group">
+                <label class="form-label">班级 *</label>
+                <select name="className" id="class-select" class="form-control" required>
+                  <option value="">正在加载班级列表...</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">姓名 *</label>
+                <input type="text" name="studentName" class="form-control" placeholder="请输入您的姓名" required>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">学号 *</label>
+                <input type="text" name="studentId" class="form-control" placeholder="请输入学号（23xxxx）" required>
+              </div>
+              
+              <button type="submit" class="btn btn-primary btn-large">
+                <i class="material-icons">arrow_forward</i>
+                开始答题
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assignment Content -->
+      <div id="assignment-content" class="assignment-content" style="display: none;">
+        <!-- Assignment Header -->
+        <div class="assignment-header">
+          <div class="assignment-info">
+            <h1 id="assignment-title">作业标题</h1>
+            <div class="assignment-meta">
+              <div class="meta-item">
+                <i class="material-icons">schedule</i>
+                <span id="assignment-due-date">截止时间</span>
+              </div>
+              <div class="meta-item">
+                <i class="material-icons">quiz</i>
+                <span id="assignment-question-count">题目数量</span>
+              </div>
+            </div>
+            <div id="assignment-description" class="assignment-description"></div>
+          </div>
+          
+          <div class="student-display">
+            <div class="student-info-display">
+              <div class="student-avatar">
+                <i class="material-icons">person</i>
+              </div>
+              <div class="student-details">
+                <div class="student-name" id="display-student-name"></div>
+                <div class="student-class" id="display-student-class"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-text">
+            <span id="progress-current">0</span> / <span id="progress-total">0</span> 题已完成
+          </div>
+        </div>
+
+        <!-- Questions Form -->
+        <form id="assignment-form">
+          <div id="questions-container" class="questions-container">
+            <!-- Questions will be dynamically loaded here -->
+          </div>
+          
+          <!-- Submit Section -->
+          <div class="submit-section">
+            <div class="submit-info">
+              <p class="text-secondary">请仔细检查您的答案，提交后将无法修改。</p>
+            </div>
+            
+            <div class="submit-actions">
+              <button type="button" class="btn btn-secondary" onclick="studentPanel.reviewAnswers()">
+                <i class="material-icons">preview</i>
+                检查答案
+              </button>
+              <button type="submit" class="btn btn-primary btn-large">
+                <i class="material-icons">send</i>
+                提交作业
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Submission Success -->
+      <div id="submission-success" class="status-page" style="display: none;">
+        <div class="status-container">
+          <div class="status-icon success-icon">
+            <i class="material-icons">check_circle</i>
+          </div>
+          <h1 class="status-title">提交成功！</h1>
+          <p class="status-subtitle">您的作业已成功提交，感谢您的参与</p>
+          
+          <div class="status-details">
+            <div class="score-display">
+              <div class="score-circle">
+                <span id="final-score">0</span>
+                <span class="score-unit">%</span>
+              </div>
+              <p class="score-label">您的得分</p>
+            </div>
+            
+            <div class="info-grid">
+              <div class="info-card">
+                <div class="info-icon">
+                  <i class="material-icons">schedule</i>
+                </div>
+                <div class="info-content">
+                  <div class="info-label">提交时间</div>
+                  <div class="info-value" id="submission-time"></div>
+                </div>
+              </div>
+              
+              <div class="info-card">
+                <div class="info-icon">
+                  <i class="material-icons">timer</i>
+                </div>
+                <div class="info-content">
+                  <div class="info-label">答题用时</div>
+                  <div class="info-value" id="time-spent"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="status-actions">
+            <button class="btn btn-primary btn-large" onclick="location.href = '/student'">
+              <i class="material-icons">home</i>
+              返回首页
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Already Submitted -->
+      <div id="already-submitted" class="status-page" style="display: none;">
+        <div class="status-container">
+          <div class="status-icon warning-icon">
+            <i class="material-icons">assignment_turned_in</i>
+          </div>
+          <h1 class="status-title">您已提交过此作业</h1>
+          <p class="status-subtitle">每位学生只能提交一次作业，以下是您的提交记录</p>
+          
+          <div class="status-details">
+            <div class="info-grid">
+              <div class="info-card">
+                <div class="info-icon">
+                  <i class="material-icons">schedule</i>
+                </div>
+                <div class="info-content">
+                  <div class="info-label">提交时间</div>
+                  <div class="info-value" id="previous-submission-time"></div>
+                </div>
+              </div>
+              
+              <div class="info-card">
+                <div class="info-icon">
+                  <i class="material-icons">grade</i>
+                </div>
+                <div class="info-content">
+                  <div class="info-label">得分</div>
+                  <div class="info-value"><span id="previous-score"></span>%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="status-actions">
+            <button class="btn btn-primary btn-large" onclick="location.href = '/student'">
+              <i class="material-icons">home</i>
+              返回首页
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="review-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>答案检查</h3>
+        <button class="modal-close" onclick="Modal.hide('review-modal')">
+          <i class="material-icons">close</i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="review-content">
+          <!-- Review content will be generated here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.hide('review-modal')">
+          继续答题
+        </button>
+        <button class="btn btn-primary" onclick="studentPanel.submitAssignment()">
+          确认提交
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-save indicator -->
+  <div id="autosave-indicator" class="autosave-indicator">
+    <i class="material-icons">cloud_done</i>
+    <span>已自动保存</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/public/js/common.js"></script>
+  <script src="/public/js/student.js"></script>
+</body>
+</html>
