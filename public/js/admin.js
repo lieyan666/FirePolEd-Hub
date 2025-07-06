@@ -140,6 +140,8 @@ class AdminPanel {
     `).join('');
   }
   
+
+  
   getStatusText(status) {
     const statusMap = {
       'active': '活跃',
@@ -162,6 +164,53 @@ class AdminPanel {
   }
   
   showAssignmentDetails(assignment, statistics) {
+    this.currentAssignment = assignment;
+    this.currentStatistics = statistics;
+    
+    // 显示模态框
+    Modal.show('assignment-details-modal');
+    
+    // 显示概览标签页内容
+    this.renderOverviewTab(assignment, statistics);
+    
+    // 重置标签页状态
+    this.switchDetailTab('overview');
+  }
+  
+  switchDetailTab(tabName) {
+    // 更新标签按钮状态
+    document.querySelectorAll('.modal-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+    if (targetTab) {
+      targetTab.classList.add('active');
+    }
+    
+    // 更新标签内容显示
+    document.querySelectorAll('.modal-tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    const targetContent = document.getElementById(`${tabName}-tab`);
+    if (targetContent) {
+      targetContent.classList.add('active');
+    }
+    
+    // 根据标签页加载对应内容
+    switch (tabName) {
+      case 'overview':
+        this.renderOverviewTab(this.currentAssignment, this.currentStatistics);
+        break;
+      case 'submissions':
+        this.renderSubmissionsTab();
+        break;
+      case 'analytics':
+        this.renderAnalyticsTab();
+        break;
+    }
+  }
+  
+  renderOverviewTab(assignment, statistics) {
     const studentUrl = `${window.location.origin}/student/${assignment.id}`;
     
     const content = `
@@ -236,8 +285,327 @@ class AdminPanel {
       </div>
     `;
     
-    document.getElementById('assignment-details-content').innerHTML = content;
-    Modal.show('assignment-details-modal');
+    const overviewContainer = document.getElementById('overview-tab');
+    if (overviewContainer) {
+      overviewContainer.innerHTML = content;
+    } else {
+      document.getElementById('assignment-details-content').innerHTML = content;
+    }
+  }
+  
+  renderSubmissionsTab() {
+    if (!this.currentStatistics || !this.currentStatistics.submissions) {
+      document.getElementById('submissions-list').innerHTML = '<p class="text-center text-secondary">暂无提交数据</p>';
+      return;
+    }
+    
+    // 填充班级筛选选项
+    this.populateClassFilter();
+    
+    // 设置搜索和筛选事件
+    this.setupSubmissionFilters();
+    
+    // 渲染学生提交列表
+    this.renderSubmissionsList(this.currentStatistics.submissions);
+  }
+  
+  populateClassFilter() {
+    const classFilter = document.getElementById('class-filter');
+    const classes = [...new Set(this.currentStatistics.submissions.map(sub => sub.studentInfo.className))];
+    
+    classFilter.innerHTML = '<option value="">所有班级</option>' + 
+      classes.map(className => `<option value="${className}">${Utils.sanitizeHTML(className)}</option>`).join('');
+  }
+  
+  setupSubmissionFilters() {
+    const searchInput = document.getElementById('student-search');
+    const classFilter = document.getElementById('class-filter');
+    const scoreFilter = document.getElementById('score-filter');
+    
+    const filterSubmissions = () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedClass = classFilter.value;
+      const selectedScoreRange = scoreFilter.value;
+      
+      let filteredSubmissions = this.currentStatistics.submissions.filter(sub => {
+        // 搜索过滤
+        const matchesSearch = !searchTerm || 
+          sub.studentInfo.name.toLowerCase().includes(searchTerm) ||
+          sub.studentInfo.className.toLowerCase().includes(searchTerm);
+        
+        // 班级过滤
+        const matchesClass = !selectedClass || sub.studentInfo.className === selectedClass;
+        
+        // 分数过滤
+        let matchesScore = true;
+        if (selectedScoreRange) {
+          const [min, max] = selectedScoreRange.split('-').map(Number);
+          matchesScore = sub.percentage >= min && sub.percentage <= max;
+        }
+        
+        return matchesSearch && matchesClass && matchesScore;
+      });
+      
+      this.renderSubmissionsList(filteredSubmissions);
+    };
+    
+    searchInput.addEventListener('input', Utils.debounce(filterSubmissions, 300));
+    classFilter.addEventListener('change', filterSubmissions);
+    scoreFilter.addEventListener('change', filterSubmissions);
+  }
+  
+  renderSubmissionsList(submissions) {
+    const container = document.getElementById('submissions-list');
+    
+    if (submissions.length === 0) {
+      container.innerHTML = '<p class="text-center text-secondary">没有找到匹配的提交记录</p>';
+      return;
+    }
+    
+    container.innerHTML = submissions.map((submission, index) => {
+      const studentInitial = submission.studentInfo.name.charAt(0).toUpperCase();
+      
+      return `
+        <div class="submission-item" data-submission-id="${index}">
+          <div class="submission-header" onclick="adminPanel.toggleSubmissionDetails(${index})">
+            <div class="student-info">
+              <div class="student-avatar">${studentInitial}</div>
+              <div class="student-details">
+                <h4>${Utils.sanitizeHTML(submission.studentInfo.name)}</h4>
+                <p>${Utils.sanitizeHTML(submission.studentInfo.className)} • 学号: ${Utils.sanitizeHTML(submission.studentInfo.studentId)}</p>
+              </div>
+            </div>
+            <div class="submission-summary">
+              <div class="score-display">
+                <div class="score-number">${submission.percentage}%</div>
+                <div class="score-label">得分</div>
+              </div>
+              <div class="submission-time">
+                ${Utils.formatDate(submission.submittedAt)}
+              </div>
+              <i class="material-icons expand-icon">expand_more</i>
+            </div>
+          </div>
+          <div class="submission-details">
+            ${this.renderSubmissionDetails(submission)}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  renderSubmissionDetails(submission) {
+    if (!this.currentAssignment || !this.currentAssignment.questions) {
+      return '<p>无法加载题目详情</p>';
+    }
+    
+    return this.currentAssignment.questions.map((question, qIndex) => {
+      const studentAnswer = submission.answers[question.id];
+      const isCorrect = this.checkAnswer(question, studentAnswer);
+      
+      return `
+        <div class="question-result">
+          <div class="question-number">${qIndex + 1}</div>
+          <div class="question-content">
+            <div class="question-text">${Utils.sanitizeHTML(question.question)}</div>
+            <div class="answer-comparison">
+              <div class="student-answer ${isCorrect ? 'correct' : 'incorrect'}">
+                <div class="answer-label">学生答案</div>
+                <div>${this.formatAnswer(question, studentAnswer)}</div>
+              </div>
+              <div class="correct-answer">
+                <div class="answer-label">正确答案</div>
+                <div>${this.formatCorrectAnswer(question)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="result-icon ${isCorrect ? 'correct' : 'incorrect'}">
+            <i class="material-icons">${isCorrect ? 'check' : 'close'}</i>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  toggleSubmissionDetails(index) {
+    const submissionItem = document.querySelector(`[data-submission-id="${index}"]`);
+    submissionItem.classList.toggle('expanded');
+  }
+  
+  checkAnswer(question, studentAnswer) {
+    const correctAnswer = question.correctAnswer || question.correctAnswers;
+    if (!correctAnswer) {
+      return false;
+    }
+    
+    if (question.type === 'single-choice') {
+      return studentAnswer === correctAnswer;
+    } else if (question.type === 'multiple-choice') {
+      if (!Array.isArray(studentAnswer) || !Array.isArray(correctAnswer)) {
+        return false;
+      }
+      return JSON.stringify(studentAnswer.sort()) === JSON.stringify(correctAnswer.sort());
+    } else if (question.type === 'short-answer') {
+      if (!studentAnswer || !correctAnswer) {
+        return false;
+      }
+      return studentAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+    }
+    return false;
+  }
+  
+  formatAnswer(question, answer) {
+    if (question.type === 'single-choice') {
+      return question.options[answer] || '未选择';
+    } else if (question.type === 'multiple-choice') {
+      if (!Array.isArray(answer)) return '未选择';
+      return answer.map(index => question.options[index]).join(', ') || '未选择';
+    } else {
+      return answer || '未回答';
+    }
+  }
+  
+  formatCorrectAnswer(question) {
+    const correctAnswer = question.correctAnswer || question.correctAnswers;
+    if (!correctAnswer) {
+      return '未设置正确答案';
+    }
+    
+    if (question.type === 'single-choice') {
+      return question.options && question.options[correctAnswer] ? question.options[correctAnswer] : '选项不存在';
+    } else if (question.type === 'multiple-choice') {
+      if (!Array.isArray(correctAnswer)) {
+        return '答案格式错误';
+      }
+      return correctAnswer.map(index => 
+        question.options && question.options[index] ? question.options[index] : '选项不存在'
+      ).join(', ');
+    } else {
+      return correctAnswer;
+    }
+  }
+  
+  renderAnalyticsTab() {
+    if (!this.currentAssignment || !this.currentStatistics) {
+      document.getElementById('question-analytics').innerHTML = '<p class="text-center text-secondary">暂无数据</p>';
+      return;
+    }
+    
+    const analytics = this.calculateQuestionAnalytics();
+    
+    const content = analytics.map((questionAnalytics, index) => {
+      const question = this.currentAssignment.questions[index];
+      
+      return `
+        <div class="question-analytics-item">
+          <div class="question-analytics-header">
+            <h4>题目 ${index + 1}: ${Utils.sanitizeHTML(question.question)}</h4>
+          </div>
+          <div class="question-analytics-content">
+            <div class="analytics-stats">
+              <div class="analytics-stat">
+                <div class="stat-value">${questionAnalytics.correctCount}</div>
+                <div class="stat-description">答对人数</div>
+              </div>
+              <div class="analytics-stat">
+                <div class="stat-value">${questionAnalytics.totalCount}</div>
+                <div class="stat-description">总答题人数</div>
+              </div>
+              <div class="analytics-stat">
+                <div class="stat-value">${questionAnalytics.correctRate}%</div>
+                <div class="stat-description">正确率</div>
+              </div>
+            </div>
+            
+            ${question.type !== 'short-answer' ? `
+              <div class="option-analysis">
+                <h5>选项分析</h5>
+                ${questionAnalytics.optionStats.map((optionStat, optIndex) => {
+                  let isCorrect = false;
+                  const correctAnswer = question.correctAnswer || question.correctAnswers;
+                  if (correctAnswer !== undefined && correctAnswer !== null) {
+                    if (Array.isArray(correctAnswer)) {
+                      isCorrect = correctAnswer.includes(optIndex);
+                    } else {
+                      isCorrect = correctAnswer === optIndex;
+                    }
+                  }
+                  return `
+                  <div class="option-bar ${isCorrect ? 'correct' : ''}">
+                    <div class="option-label">选项 ${String.fromCharCode(65 + optIndex)}</div>
+                    <div class="option-progress">
+                      <div class="option-progress-fill ${isCorrect ? 'correct' : ''}" 
+                           style="width: ${optionStat.percentage}%"></div>
+                    </div>
+                    <div class="option-count">${optionStat.count}人 (${optionStat.percentage}%)</div>
+                  </div>
+                  `;
+                }).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('question-analytics').innerHTML = content;
+  }
+  
+  calculateQuestionAnalytics() {
+    const submissions = this.currentStatistics.submissions;
+    const questions = this.currentAssignment.questions;
+    
+    return questions.map((question, qIndex) => {
+      let correctCount = 0;
+      let totalCount = submissions.length;
+      const optionCounts = new Array(question.options ? question.options.length : 0).fill(0);
+      
+      submissions.forEach(submission => {
+        const answer = submission.answers[question.id];
+        
+        // 统计正确答案数
+        if (this.checkAnswer(question, answer)) {
+          correctCount++;
+        }
+        
+        // 统计选项选择情况
+        if (question.type === 'single-choice' && typeof answer === 'number') {
+          optionCounts[answer]++;
+        } else if (question.type === 'multiple-choice' && Array.isArray(answer)) {
+          answer.forEach(optIndex => {
+            if (optIndex < optionCounts.length) {
+              optionCounts[optIndex]++;
+            }
+          });
+        }
+      });
+      
+      const correctRate = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+    
+      
+      // 计算选项统计
+      const optionStats = optionCounts.map(count => ({
+        count,
+        percentage: totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
+      }));
+      
+      return {
+        correctCount,
+        totalCount,
+        correctRate,
+        optionStats
+      };
+    });
+  }
+  
+  exportResults() {
+    if (!this.currentAssignment || !this.currentStatistics) {
+      Utils.showMessage('没有可导出的数据', 'warning');
+      return;
+    }
+    
+    // 这里可以实现导出功能，比如生成CSV或Excel文件
+    Utils.showMessage('导出功能开发中...', 'info');
   }
   
   copyAssignmentLink(assignmentId) {
@@ -647,6 +1015,12 @@ function addClass() {
 function updateClass() {
   adminPanel.updateClass();
 }
+
+
+
+
+
+
 
 // Initialize admin panel
 let adminPanel;
