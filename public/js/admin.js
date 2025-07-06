@@ -91,6 +91,7 @@ class AdminPanel {
   
   renderAssignmentsList() {
     const tbody = document.getElementById('assignments-list');
+    const mobileContainer = document.getElementById('assignments-mobile-list');
     
     if (this.assignments.length === 0) {
       tbody.innerHTML = `
@@ -104,9 +105,18 @@ class AdminPanel {
           </td>
         </tr>
       `;
+      
+      mobileContainer.innerHTML = `
+        <div class="empty-state">
+          <i class="material-icons">assignment</i>
+          <h3>暂无作业</h3>
+          <p>点击"创建作业"按钮开始创建您的第一个作业</p>
+        </div>
+      `;
       return;
     }
     
+    // 渲染桌面端表格
     tbody.innerHTML = this.assignments.map(assignment => `
       <tr class="assignment-row" onclick="adminPanel.viewAssignment('${assignment.id}')">
         <td>
@@ -137,6 +147,47 @@ class AdminPanel {
           </div>
         </td>
       </tr>
+    `).join('');
+    
+    // 渲染移动端卡片
+    mobileContainer.innerHTML = this.assignments.map(assignment => `
+      <div class="mobile-card-item" onclick="adminPanel.viewAssignment('${assignment.id}')">
+        <div class="mobile-card-header">
+          <div class="mobile-card-title">${Utils.sanitizeHTML(assignment.title)}</div>
+          <span class="status-badge status-${assignment.status}">
+            ${this.getStatusText(assignment.status)}
+          </span>
+        </div>
+        <div class="mobile-card-meta">
+          <div class="mobile-card-meta-item">
+            <div class="mobile-card-meta-label">创建时间</div>
+            <div class="mobile-card-meta-value">${Utils.formatDate(assignment.createdAt)}</div>
+          </div>
+          <div class="mobile-card-meta-item">
+            <div class="mobile-card-meta-label">截止时间</div>
+            <div class="mobile-card-meta-value">${assignment.dueDate ? Utils.formatDate(assignment.dueDate) : '无限制'}</div>
+          </div>
+          <div class="mobile-card-meta-item">
+            <div class="mobile-card-meta-label">提交数</div>
+            <div class="mobile-card-meta-value">${assignment.submissionCount || 0}</div>
+          </div>
+        </div>
+        ${assignment.description ? `<p style="margin: 8px 0; color: var(--text-secondary); font-size: 14px;">${Utils.sanitizeHTML(assignment.description)}</p>` : ''}
+        <div class="mobile-card-actions">
+          <button class="btn btn-text" onclick="event.stopPropagation(); adminPanel.viewAssignment('${assignment.id}')">
+            <i class="material-icons">visibility</i>
+            查看
+          </button>
+          <button class="btn btn-text" onclick="event.stopPropagation(); adminPanel.copyAssignmentLink('${assignment.id}')">
+            <i class="material-icons">link</i>
+            链接
+          </button>
+          <button class="btn btn-text" onclick="event.stopPropagation(); adminPanel.deleteAssignment('${assignment.id}')" style="color: var(--error-color);">
+            <i class="material-icons">delete</i>
+            删除
+          </button>
+        </div>
+      </div>
     `).join('');
   }
   
@@ -215,19 +266,19 @@ class AdminPanel {
     
     const content = `
       <div class="assignment-info">
-        <div class="info-item">
+        <div class="info-card">
           <div class="info-label">作业标题</div>
           <div class="info-value">${Utils.sanitizeHTML(assignment.title)}</div>
         </div>
-        <div class="info-item">
+        <div class="info-card">
           <div class="info-label">创建时间</div>
           <div class="info-value">${Utils.formatDate(assignment.createdAt)}</div>
         </div>
-        <div class="info-item">
+        <div class="info-card">
           <div class="info-label">截止时间</div>
           <div class="info-value">${assignment.dueDate ? Utils.formatDate(assignment.dueDate) : '无限制'}</div>
         </div>
-        <div class="info-item">
+        <div class="info-card">
           <div class="info-label">状态</div>
           <div class="info-value">
             <span class="status-badge status-${assignment.status}">
@@ -235,37 +286,33 @@ class AdminPanel {
             </span>
           </div>
         </div>
+        <div class="info-card">
+          <div class="info-label">总提交数</div>
+          <div class="info-value">${statistics.submissions.length}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">参与班级</div>
+          <div class="info-value">${Object.keys(statistics.detailedStatistics.submissionsByClass).length}</div>
+        </div>
       </div>
       
-      <div class="card" style="margin-bottom: 24px;">
+      <div class="card" style="margin-bottom: 16px;">
         <div class="card-content">
-          <h4>学生链接</h4>
+          <h4 style="margin-bottom: 12px; font-size: 16px;">学生链接</h4>
           <div class="input-group">
-            <input type="text" class="form-control" value="${studentUrl}" readonly>
-            <button class="btn btn-primary" onclick="Utils.copyToClipboard('${studentUrl}')">
-              <i class="material-icons">content_copy</i>
+            <input type="text" class="form-control" value="${studentUrl}" readonly style="font-size: 13px;">
+            <button class="btn btn-primary" onclick="Utils.copyToClipboard('${studentUrl}')" style="padding: 6px 12px;">
+              <i class="material-icons" style="font-size: 16px;">content_copy</i>
               复制
             </button>
           </div>
         </div>
       </div>
       
-      <div class="card">
-        <div class="card-content">
-          <h4>提交统计</h4>
-          <div class="stats-grid" style="margin-bottom: 16px;">
-            <div class="stat-card">
-              <div class="stat-number">${statistics.submissions.length}</div>
-              <div class="stat-label">总提交数</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number">${Object.keys(statistics.detailedStatistics.submissionsByClass).length}</div>
-              <div class="stat-label">参与班级</div>
-            </div>
-          </div>
-          
-          ${statistics.submissions.length > 0 ? `
-            <h5>最近提交</h5>
+      ${statistics.submissions.length > 0 ? `
+        <div class="card">
+          <div class="card-content">
+            <h4 style="margin-bottom: 12px; font-size: 16px;">最近提交</h4>
             <div class="submissions-list">
               ${statistics.submissions.slice(-10).reverse().map(sub => `
                 <div class="submission-item">
@@ -280,9 +327,9 @@ class AdminPanel {
                 </div>
               `).join('')}
             </div>
-          ` : '<p class="text-center text-secondary">暂无提交</p>'}
+          </div>
         </div>
-      </div>
+      ` : ''}
     `;
     
     const overviewContainer = document.getElementById('overview-tab');
@@ -873,8 +920,10 @@ class AdminPanel {
   
   renderClassesList() {
     const tbody = document.getElementById('classes-list');
+    const mobileCardView = document.getElementById('classes-mobile-card-view');
     
     if (this.classes.length === 0) {
+      // Desktop table empty state
       tbody.innerHTML = `
         <tr>
           <td colspan="3" class="text-center">
@@ -886,9 +935,21 @@ class AdminPanel {
           </td>
         </tr>
       `;
+      
+      // Mobile card view empty state
+      if (mobileCardView) {
+        mobileCardView.innerHTML = `
+          <div class="empty-state">
+            <i class="material-icons">class</i>
+            <h3>暂无班级</h3>
+            <p>点击"添加班级"按钮开始创建您的第一个班级</p>
+          </div>
+        `;
+      }
       return;
     }
     
+    // Desktop table view
     tbody.innerHTML = this.classes.map((className, index) => `
       <tr class="class-row">
         <td>
@@ -907,6 +968,31 @@ class AdminPanel {
         </td>
       </tr>
     `).join('');
+    
+    // Mobile card view
+    if (mobileCardView) {
+      mobileCardView.innerHTML = this.classes.map((className, index) => `
+        <div class="mobile-card">
+          <div class="mobile-card-header">
+            <h3 class="mobile-card-title">${Utils.sanitizeHTML(className)}</h3>
+            <div class="mobile-card-actions">
+              <button class="action-btn edit" onclick="adminPanel.editClass('${className}')" title="编辑">
+                <i class="material-icons">edit</i>
+              </button>
+              <button class="action-btn delete" onclick="adminPanel.deleteClass('${className}')" title="删除">
+                <i class="material-icons">delete</i>
+              </button>
+            </div>
+          </div>
+          <div class="mobile-card-content">
+            <div class="mobile-card-field">
+              <span class="mobile-card-label">创建时间:</span>
+              <span class="mobile-card-value">${Utils.formatDate(new Date())}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
   }
   
   async addClass() {

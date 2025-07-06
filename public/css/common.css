@@ -494,6 +494,11 @@ img, video, iframe {
 }
 
 /* Message Toast */
+.toast,
+.toast * {
+  color: var(--text-primary) !important;
+}
+
 .toast {
   position: fixed;
   top: 24px;

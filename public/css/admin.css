@@ -4,14 +4,16 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--background-color);
 }
 
 .admin-main {
   flex: 1;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 24px 16px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* Page Header */
@@ -32,18 +34,37 @@
 /* Tab Navigation */
 .nav-menu {
   display: flex;
-  gap: 24px;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  flex-grow: 1;
+  justify-content: flex-end;
 }
 
 .nav-link {
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 8px 12px;
+  border-radius: 16px;
   transition: all var(--transition-fast);
   position: relative;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.nav-link:hover {
+  background-color: rgba(1, 142, 238, 0.08);
+  color: var(--primary-color);
 }
 
 .nav-link.active {
-  background-color: rgba(1, 142, 238, 0.1);
+  background-color: rgba(1, 142, 238, 0.12);
   color: var(--primary-color);
 }
 
@@ -59,11 +80,15 @@
 /* Search Box */
 .search-box {
   position: relative;
-  width: 300px;
+  width: 100%;
+  max-width: 300px;
+  min-width: 200px;
 }
 
 .search-box input {
   padding-left: 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .search-box::before {
@@ -808,6 +833,87 @@
   color: #666;
 }
 
+/* Assignment Overview Styles */
+.assignment-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.assignment-info .info-card {
+  flex: 1;
+  min-width: 150px;
+}
+
+.info-card {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #018eee;
+}
+
+.info-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.submissions-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.submission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.submission-item:last-child {
+  border-bottom: none;
+}
+
+.student-info {
+  flex: 1;
+}
+
+.student-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.student-class {
+  font-size: 12px;
+  color: #666;
+}
+
+.submission-score {
+  text-align: right;
+}
+
+.score-badge {
+  background: #018eee;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  display: inline-block;
+}
+
 /* Toast Messages */
 .toast {
   position: fixed;
@@ -869,34 +975,395 @@
   background: white;
 }
 
+/* Mobile Navigation */
+.mobile-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.mobile-nav-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Enhanced Table Responsiveness */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  box-shadow: var(--shadow-1);
+}
+
+.table {
+  min-width: 600px;
+}
+
+/* Mobile-first Card Layout for Tables */
+.mobile-card-view {
+  display: none;
+}
+
+.mobile-card-item {
+  background: var(--surface-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-1);
+  border-left: 4px solid var(--primary-color);
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.mobile-card-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.mobile-card-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.mobile-card-meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-card-meta-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.mobile-card-meta-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.mobile-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .admin-main {
-    padding: 24px 16px;
+    padding: 20px 12px;
   }
   
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .nav-content {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* 导航栏样式 */
+  .nav-content {
+    flex-wrap: nowrap;
     gap: 16px;
+    padding: 16px 20px;
+  }
+
+  .nav-brand-text {
+    display: none;
+  }
+
+  .nav-menu {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .nav-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-link {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .nav-menu .btn {
+    flex-shrink: 0;
+    margin-left: 0 !important;
+  }
+
+  /* 页面头部样式 */
+  .page-header {
+    margin-bottom: 24px;
+    justify-content: flex-end;
+  }
+
+  .page-header h2 {
+    display: none;
+  }
+
+  /* 移动端全局调整 */
+  .admin-main {
+    padding: 20px 16px;
+    overflow-x: hidden;
   }
   
-  .nav-menu {
-    flex-wrap: wrap;
-    gap: 12px;
+  /* 状态徽章优化 */
+  .status-badge {
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+  
+  /* 搜索框优化 */
+  .search-box {
+    margin-bottom: 12px;
+  }
+  
+  .search-box input {
+    padding: 8px 12px 8px 36px;
+    font-size: 14px;
+  }
+  
+  /* 作业行优化 */
+  .assignment-row {
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  
+  /* 操作按钮优化 */
+  .action-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  
+  /* 移动端模态框优化 */
+  .modal-content {
+    width: 98%;
+    margin: 8px auto;
+    max-height: 92vh;
+  }
+  
+  .modal-header {
+    padding: 12px 16px;
+  }
+  
+  .modal-title {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .modal-footer {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  
+  .modal-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-tab {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 60px;
+  }
+  
+  .modal-tab-content {
+    padding: 12px 0;
+    max-height: calc(92vh - 140px);
+  }
+  
+  /* 表单组件紧凑化 */
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-label {
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  
+  .form-control {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  /* 搜索过滤栏优化 */
+  .search-filter-bar {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .search-filter-bar .form-control {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  /* 学生提交项优化 */
+  .submission-item {
+    margin-bottom: 8px;
+  }
+  
+  .submission-header {
+    padding: 12px 16px;
+  }
+  
+  .submission-details {
+    padding: 12px 16px;
+  }
+  
+  .student-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .student-details h4 {
+    font-size: 14px;
+  }
+  
+  .student-details p {
+    font-size: 12px;
+  }
+  
+  .score-number {
+    font-size: 18px;
+  }
+  
+  .score-label {
+    font-size: 11px;
+  }
+  
+  /* 移动端网格系统 */
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  
+  /* 移动端卡片容器优化 */
+  .mobile-card-view {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 4px 0;
+    margin: 0;
+  }
+
+  .mobile-card-item {
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--surface-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: var(--shadow-1);
+  }
+  
+  .mobile-card-header {
+    margin-bottom: 8px;
+  }
+  
+  .mobile-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  
+  .mobile-card-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  .mobile-card-meta-label {
+    font-size: 11px;
+    margin-bottom: 1px;
+  }
+  
+  .mobile-card-meta-value {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  
+  .mobile-card-actions {
+    gap: 6px;
+    margin-top: 8px;
+  }
+  
+  .page-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+  }
+  
+  /* 移动端卡片和表格显示 */
+  
+  /* Hide table, show mobile cards */
+  .table-container .table {
+    display: none;
+  }
+  
+  .mobile-card-view {
+    display: block;
   }
   
   .search-box {
-    width: 100%;
+    max-width: none;
+    min-width: auto;
   }
   
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
   }
   
   .action-buttons {
-    flex-direction: column;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 6px;
   }
   
   .question-header {
@@ -907,6 +1374,12 @@
   
   .question-type-selector {
     flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .type-option {
+    padding: 6px 12px;
+    font-size: 13px;
   }
   
   .stats-dashboard {
@@ -917,30 +1390,648 @@
     grid-template-columns: 1fr;
   }
   
-  .submission-item {
+  .submission-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .student-info {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .submission-summary {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .search-filter-bar {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .search-filter-bar .form-control {
+    min-width: auto;
+  }
+  
+  .answer-comparison {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 16px auto;
+    max-height: 85vh;
+  }
+  
+  .modal-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .modal-tab {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 8px;
+    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
+  /* 超小屏幕优化 */
+  .admin-main {
+    padding: 16px 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .stat-card {
+    padding: 10px;
+    margin: 0 2px;
+    border-radius: 8px;
+  }
+
+  .stat-number {
+    font-size: 1.1rem;
+  }
+  
+  .page-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
   .stats-grid {
     grid-template-columns: 1fr;
   }
   
+  /* 移动端卡片布局超紧凑优化 */
+  .mobile-card-view {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 2px 0;
+  }
+  
+  .mobile-card-item {
+    padding: 8px;
+    border-radius: 6px;
+    border-left-width: 3px;
+  }
+  
+  .mobile-card-header {
+    margin-bottom: 6px;
+  }
+  
+  .mobile-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 2px;
+  }
+  
+  .mobile-card-meta {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  
+  .mobile-card-meta-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .mobile-card-meta-label {
+    font-size: 10px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  
+  .mobile-card-meta-value {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: right;
+  }
+  
+  .mobile-card-actions {
+    gap: 4px;
+    margin-top: 6px;
+  }
+  
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  
+  /* 状态徽章超紧凑 */
+  .status-badge {
+    padding: 1px 6px;
+    font-size: 10px;
+    border-radius: 6px;
+  }
+  
+  /* 搜索框超紧凑 */
+  .search-box {
+    margin-bottom: 8px;
+  }
+  
+  .search-box input {
+    padding: 6px 8px 6px 32px;
+    font-size: 13px;
+  }
+  
+  .search-box::before {
+    left: 8px;
+    font-size: 16px;
+  }
+  
+  /* 紧凑型导航 */
+  .nav-menu {
+    gap: 4px;
+  }
+  
+  .nav-link {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+  
+  .page-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  /* Ultra-compact navigation */
+  .nav-menu {
+    gap: 4px;
+  }
+  
+  .nav-link {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-height: 28px;
+    border-radius: 10px;
+  }
+  
+  /* Optimized stats layout for very small screens */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  
+  .stat-card {
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+  
+  .mobile-card-item {
+    padding: 12px;
+  }
+  
+  .mobile-card-meta {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
   .modal-content {
-    margin: 8px;
-    width: calc(100% - 16px);
+    width: 100%;
+    margin: 0;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .modal-header {
+    padding: 8px 12px;
+  }
+  
+  .modal-title {
+    font-size: 15px;
+  }
+  
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .modal-footer {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  
+  .modal-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-tab {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-width: 50px;
+  }
+  
+  .modal-tab-content {
+    padding: 8px 0;
+    max-height: calc(100vh - 120px);
+  }
+  
+  /* 超紧凑表单 */
+  .form-group {
+    margin-bottom: 8px;
+  }
+  
+  .form-label {
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+  
+  .form-control {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  
+  /* 搜索栏超紧凑 */
+  .search-filter-bar {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  
+  /* 学生项超紧凑 */
+  .submission-header {
+    padding: 8px 12px;
+  }
+  
+  .submission-details {
+    padding: 8px 12px;
+  }
+  
+  .student-info {
+    gap: 8px;
+  }
+  
+  .student-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .student-details h4 {
+    font-size: 13px;
+  }
+  
+  .student-details p {
+    font-size: 11px;
+  }
+  
+  .score-number {
+    font-size: 16px;
+  }
+  
+  .score-label {
+    font-size: 10px;
+  }
+  
+  .submission-summary {
+    gap: 8px;
   }
   
   .question-item {
-    padding: 16px;
+    padding: 8px;
+    margin-bottom: 6px;
   }
   
   .option-item {
     flex-direction: column;
     align-items: stretch;
+    gap: 4px;
+    padding: 6px;
+  }
+  
+  /* 超小屏幕概览优化 */
+  .assignment-info {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  
+  .assignment-info .info-card {
+    flex: none;
+    min-width: auto;
+  }
+  
+  .info-card {
+    padding: 6px;
+    border-left-width: 2px;
+  }
+  
+  .info-label {
+    font-size: 9px;
+    margin-bottom: 1px;
+  }
+  
+  .info-value {
+    font-size: 12px;
+  }
+  
+  .submissions-list {
+    max-height: 150px;
+  }
+  
+  .submission-item {
+    padding: 6px;
+    gap: 2px;
+  }
+  
+  .student-name {
+    font-size: 12px;
+  }
+  
+  .student-class {
+    font-size: 10px;
+  }
+  
+  .score-badge {
+    padding: 1px 4px;
+    font-size: 10px;
+  }
+  
+  /* 超小屏幕题目分析优化 */
+  .question-analytics-item {
+    margin-bottom: 8px;
+  }
+  
+  .question-analytics-header {
+    padding: 6px 8px;
+  }
+  
+  .question-analytics-header h4 {
+    font-size: 12px;
+  }
+  
+  .question-analytics-content {
+    padding: 8px;
+  }
+  
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .analytics-stat {
+    padding: 6px 2px;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+    margin-bottom: 1px;
+  }
+  
+  .stat-description {
+    font-size: 10px;
+  }
+  
+  .option-analysis {
+    margin-top: 6px;
+  }
+  
+  .option-analysis h5 {
+    font-size: 11px;
+    margin: 0 0 4px 0;
+  }
+  
+  .option-bar {
+    margin-bottom: 4px;
+    padding: 4px 6px;
+    gap: 2px;
+  }
+  
+  .option-label {
+    font-size: 11px;
+  }
+  
+  .option-progress {
+    height: 4px;
+  }
+  
+  .option-count {
+    font-size: 10px;
+  }
+  
+  /* 概览标签页移动端优化 */
+  .assignment-info {
+    flex-direction: column;
     gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .assignment-info .info-card {
+    flex: none;
+    min-width: auto;
+  }
+  
+  .info-card {
+    padding: 8px;
+    border-left-width: 3px;
+  }
+  
+  .info-label {
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+  
+  .info-value {
+    font-size: 14px;
+  }
+  
+  .submissions-list {
+    max-height: 200px;
+  }
+  
+  .submission-item {
+    padding: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  
+  .student-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .student-name {
+    font-size: 13px;
+    margin-bottom: 1px;
+  }
+  
+  .student-class {
+    font-size: 11px;
+  }
+  
+  .submission-score {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .score-badge {
+    padding: 1px 6px;
+    font-size: 11px;
+  }
+  
+  /* 题目分析移动端优化 */
+  .question-analytics-item {
+    margin-bottom: 12px;
+  }
+  
+  .question-analytics-header {
+    padding: 8px 12px;
+  }
+  
+  .question-analytics-header h4 {
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.2;
+  }
+  
+  .question-analytics-content {
+    padding: 12px;
+  }
+  
+  .analytics-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  
+  .analytics-stat {
+    padding: 8px 4px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+  
+  .stat-description {
+    font-size: 11px;
+  }
+  
+  .option-analysis {
+    margin-top: 8px;
+  }
+  
+  .option-analysis h5 {
+    font-size: 13px;
+    margin: 0 0 6px 0;
+  }
+  
+  .option-bar {
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  
+  .option-label {
+    min-width: auto;
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  .option-progress {
+    margin: 0;
+    height: 6px;
+  }
+  
+  .option-count {
+    min-width: auto;
+    text-align: center;
+    font-size: 11px;
+  }
+  
+  /* 题目结果优化 */
+  .question-result {
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+  
+  .question-header {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  
+  .question-stats {
+    padding: 6px 8px;
+  }
+  
+  .stat-item {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  
+  .answer-comparison {
+    gap: 6px;
+    padding: 6px;
+  }
+  
+  .correct-answer,
+  .student-answer {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+  
+  .btn-fab {
+    width: 48px;
+    height: 48px;
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  .analytics-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .option-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  
+  .option-progress {
+    margin: 0;
+  }
+  
+  .toast {
+    left: 8px;
+    right: 8px;
+    max-width: none;
   }
 }
