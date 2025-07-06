@@ -920,7 +920,7 @@ class AdminPanel {
   
   renderClassesList() {
     const tbody = document.getElementById('classes-list');
-    const mobileCardView = document.getElementById('classes-mobile-card-view');
+    const mobileCardView = document.getElementById('classes-mobile-list');
     
     if (this.classes.length === 0) {
       // Desktop table empty state
