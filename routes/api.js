@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
-const config = require('../config.json');
+// Use shared configuration loader
+const config = require('../config');
 
 // 工具函数
 const readJsonFile = (filePath) => {

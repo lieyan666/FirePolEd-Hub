@@ -4,7 +4,8 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const config = require('../config.json');
+// Use shared configuration loader
+const config = require('../config');
 const crypto = require('crypto');
 
 // 会话存储（生产环境建议使用 Redis 或数据库）

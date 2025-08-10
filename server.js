@@ -3,7 +3,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
-const config = require('./config.json');
+// Load configuration, falling back to example config if necessary
+const config = require('./config');
 
 const app = express();
 const PORT = config.server.port || 3000;
