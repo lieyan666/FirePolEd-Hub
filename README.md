@@ -33,6 +33,16 @@
 - **UI框架**: Material Design
 - **图标**: Material Icons
 
+### React 前端（实验性）
+
+`frontend/` 目录中包含使用 Vite 构建的 React 版本前端，正在逐步替换原有的静态页面。开发调试可运行：
+
+```bash
+npm --prefix frontend install   # 首次安装依赖
+npm --prefix frontend run dev   # 启动开发服务器
+```
+
+
 ## 安全配置
 
 ### 管理员密码验证
