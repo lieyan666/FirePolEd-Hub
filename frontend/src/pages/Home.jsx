@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { showMessage } from '../utils/message';
+import ActionCard from '../components/ActionCard';
+import AssignmentInput from '../components/AssignmentInput';
 
 export default function Home() {
   const [assignmentId, setAssignmentId] = useState('');
@@ -25,12 +27,6 @@ export default function Home() {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleStart();
-    }
-  };
-
   return (
     <div className="container">
       <header className="header">
@@ -46,35 +42,26 @@ export default function Home() {
       <main className="main-content">
         <div className="action-section">
           <div className="action-cards">
-            <div className="card action-card" onClick={() => { window.location.href = '/admin'; }}>
-              <div className="card-content">
-                <i className="material-icons">admin_panel_settings</i>
-                <h3>管理后台</h3>
-                <p>创建和管理作业，查看学生提交情况和统计数据</p>
-                <button className="btn btn-primary">进入管理后台</button>
-              </div>
-            </div>
+            <ActionCard
+              icon="admin_panel_settings"
+              title="管理后台"
+              description="创建和管理作业，查看学生提交情况和统计数据"
+              onClick={() => { window.location.href = '/admin'; }}
+            >
+              <button className="btn btn-primary">进入管理后台</button>
+            </ActionCard>
 
-            <div className="card action-card">
-              <div className="card-content">
-                <i className="material-icons">assignment</i>
-                <h3>学生答题</h3>
-                <p>输入作业链接或ID开始答题</p>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    value={assignmentId}
-                    onChange={(e) => setAssignmentId(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="请输入作业ID或完整链接"
-                    className="form-control"
-                  />
-                  <button className="btn btn-primary" onClick={handleStart}>
-                    开始答题
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ActionCard
+              icon="assignment"
+              title="学生答题"
+              description="输入作业链接或ID开始答题"
+            >
+              <AssignmentInput
+                value={assignmentId}
+                onChange={(e) => setAssignmentId(e.target.value)}
+                onSubmit={handleStart}
+              />
+            </ActionCard>
           </div>
         </div>
       </main>

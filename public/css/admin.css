@@ -1003,6 +1003,14 @@
   min-width: 600px;
 }
 
+/* Responsive stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
 /* Mobile-first Card Layout for Tables */
 .mobile-card-view {
   display: none;
@@ -1322,8 +1330,8 @@
   
   /* 移动端网格系统 */
   .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
   }
   
   /* 移动端卡片容器优化 */
@@ -1436,7 +1444,7 @@
   }
   
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 16px;
     margin-bottom: 24px;
   }
@@ -1574,7 +1582,7 @@
 
   .stats-grid {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 8px;
   }
 
   .stat-card {
@@ -1590,10 +1598,6 @@
   .page-header {
     gap: 8px;
     margin-bottom: 16px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
   }
   
   /* 移动端卡片布局超紧凑优化 */
