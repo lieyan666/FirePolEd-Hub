@@ -46,7 +46,7 @@ export default function Home() {
       <main className="main-content">
         <div className="action-section">
           <div className="action-cards">
-            <div className="card action-card" onClick={() => navigate('/admin')}>
+            <div className="card action-card" onClick={() => { window.location.href = '/admin'; }}>
               <div className="card-content">
                 <i className="material-icons">admin_panel_settings</i>
                 <h3>管理后台</h3>
