@@ -331,10 +331,11 @@
   margin-bottom: 24px;
 }
 
-.info-item {
+.info-card {
   padding: 16px;
   background: var(--background-color);
   border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
 }
 
 .info-label {
@@ -834,24 +835,6 @@
 }
 
 /* Assignment Overview Styles */
-.assignment-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.assignment-info .info-card {
-  flex: 1;
-  min-width: 150px;
-}
-
-.info-card {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 4px solid #018eee;
-}
 
 .info-label {
   font-size: 12px;
@@ -1001,6 +984,14 @@
 
 .table {
   min-width: 600px;
+}
+
+/* Responsive stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
 /* Mobile-first Card Layout for Tables */
@@ -1322,8 +1313,8 @@
   
   /* 移动端网格系统 */
   .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
   }
   
   /* 移动端卡片容器优化 */
@@ -1436,7 +1427,7 @@
   }
   
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 16px;
     margin-bottom: 24px;
   }
@@ -1574,7 +1565,7 @@
 
   .stats-grid {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 8px;
   }
 
   .stat-card {
@@ -1590,10 +1581,6 @@
   .page-header {
     gap: 8px;
     margin-bottom: 16px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
   }
   
   /* 移动端卡片布局超紧凑优化 */
@@ -1863,13 +1850,13 @@
   
   /* 超小屏幕概览优化 */
   .assignment-info {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 6px;
     margin-bottom: 10px;
   }
-  
+
   .assignment-info .info-card {
-    flex: none;
     min-width: auto;
   }
   
@@ -1976,16 +1963,16 @@
   
   /* 概览标签页移动端优化 */
   .assignment-info {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 8px;
     margin-bottom: 12px;
   }
-  
+
   .assignment-info .info-card {
-    flex: none;
     min-width: auto;
   }
-  
+
   .info-card {
     padding: 8px;
     border-left-width: 3px;

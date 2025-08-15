@@ -169,10 +169,13 @@ img, video, iframe {
 .action-card {
   text-align: center;
   transition: transform var(--transition-normal);
+}
+
+.action-card.clickable {
   cursor: pointer;
 }
 
-.action-card:hover {
+.action-card.clickable:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-3);
 }
@@ -190,6 +193,17 @@ img, video, iframe {
 
 .action-card p {
   margin-bottom: 20px;
+}
+
+/* Input group */
+.input-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.input-group input {
+  flex: 1;
 }
 
 /* Features Section */
@@ -614,5 +628,8 @@ img, video, iframe {
   
   .toast.show {
     transform: translateY(0);
+  }
+  .input-group {
+    flex-direction: column;
   }
 }

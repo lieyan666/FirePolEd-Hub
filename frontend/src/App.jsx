@@ -1,22 +1,18 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import Admin from './pages/Admin';
+import Student from './pages/Student';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/admin" element={<AdminRedirect />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/student/assignment/:assignmentId" element={<Student />} />
       </Routes>
     </BrowserRouter>
   );
-}
-
-// Component to redirect to the actual admin page
-function AdminRedirect() {
-  // Redirect to the actual admin page served by Express
-  window.location.href = '/admin';
-  return <div>正在跳转到管理后台...</div>;
 }
 
 export default App;

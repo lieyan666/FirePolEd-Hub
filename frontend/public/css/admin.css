@@ -306,10 +306,11 @@
   margin-bottom: 24px;
 }
 
-.info-item {
+.info-card {
   padding: 16px;
   background: var(--background-color);
   border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
 }
 
 .info-label {

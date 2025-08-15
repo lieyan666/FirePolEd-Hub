@@ -67,6 +67,24 @@ class AdminPanel {
     } catch (error) {
       console.error('加载作业列表失败:', error);
       Utils.showMessage('加载作业列表失败', 'error');
+      const tbody = document.getElementById('assignments-list');
+      const mobileContainer = document.getElementById('assignments-mobile-list');
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-error">加载作业列表失败</td>
+          </tr>
+        `;
+      }
+      if (mobileContainer) {
+        mobileContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="material-icons">error</i>
+            <h3>加载作业列表失败</h3>
+            <p>请稍后重试</p>
+          </div>
+        `;
+      }
     }
   }
   
@@ -76,6 +94,7 @@ class AdminPanel {
       this.updateStatsCards(stats);
     } catch (error) {
       console.error('加载系统统计失败:', error);
+      Utils.showMessage('加载系统统计失败', 'error');
     }
   }
   
