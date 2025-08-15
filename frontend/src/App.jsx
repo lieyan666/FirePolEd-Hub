@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import AssignmentDetail from './pages/AssignmentDetail';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/student/assignment/:id" element={<AssignmentDetail />} />
         <Route path="/admin" element={<AdminRedirect />} />
       </Routes>
     </BrowserRouter>
