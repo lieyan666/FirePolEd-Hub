@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import AssignmentDetail from './pages/AssignmentDetail';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -8,17 +9,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/student/assignment/:id" element={<AssignmentDetail />} />
-        <Route path="/admin" element={<AdminRedirect />} />
+        <Route path="/admin/*" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-// Component to redirect to the actual admin page
-function AdminRedirect() {
-  // Redirect to the actual admin page served by Express
-  window.location.href = '/admin';
-  return <div>正在跳转到管理后台...</div>;
-}
-
 export default App;

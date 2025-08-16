@@ -57,7 +57,7 @@ export default function AssignmentDetail() {
       }
     })();
     return () => { mounted = false; };
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const questionCount = assignment?.questions?.length || 0;
   const dueLabel = useMemo(() => {

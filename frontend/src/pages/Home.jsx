@@ -46,7 +46,7 @@ export default function Home() {
               icon="admin_panel_settings"
               title="管理后台"
               description="创建和管理作业，查看学生提交情况和统计数据"
-              onClick={() => { window.location.href = '/admin'; }}
+              onClick={() => navigate('/admin')}
             >
               <button className="btn btn-primary">进入管理后台</button>
             </ActionCard>
