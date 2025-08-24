@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/admin-dashboard.css';
 
 // simple api helper with session header
@@ -11,7 +12,9 @@ function useApi() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || '请求失败');
+      const err = new Error(data.error || '请求失败');
+      err.status = res.status;
+      throw err;
     }
     return res.json();
   }
@@ -24,22 +27,34 @@ export default function AdminDashboard() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
+    const sid = localStorage.getItem('adminSession');
+    if (!sid) {
+      setLoading(false);
+      navigate('/admin/login', { replace: true });
+      return () => { mounted = false; };
+    }
     (async () => {
       try {
         const data = await api.get('/admin/assignments');
         if (!mounted) return;
         setAssignments(data.assignments || []);
       } catch (e) {
+        if (e && e.status === 401) {
+          localStorage.removeItem('adminSession');
+          navigate('/admin/login', { replace: true });
+          return;
+        }
         setError(e.message);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function openAssignment(a) {
     setSelected(null);
@@ -47,6 +62,11 @@ export default function AdminDashboard() {
       const detail = await api.get(`/admin/assignments/${a.id}`);
       setSelected(detail);
     } catch (e) {
+      if (e && e.status === 401) {
+        localStorage.removeItem('adminSession');
+        navigate('/admin/login', { replace: true });
+        return;
+      }
       setError(e.message);
     }
   }
