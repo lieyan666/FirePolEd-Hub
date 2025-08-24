@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AssignmentForm from './AssignmentForm';
 import AssignmentDetails from './AssignmentDetails';
+import Modal from './Modal';
 
 export default function Assignments({ api }) {
   const [assignments, setAssignments] = useState([]);
@@ -213,15 +214,17 @@ export default function Assignments({ api }) {
       </div>
 
       {selected && (
-        <AssignmentDetails
-          assignment={selected}
-          onClose={() => setSelected(null)}
-          onDelete={(id) => {
-            deleteAssignment(id);
-            setSelected(null);
-          }}
-          copyLink={copyLink}
-        />
+        <Modal onClose={() => setSelected(null)}>
+          <AssignmentDetails
+            assignment={selected}
+            onClose={() => setSelected(null)}
+            onDelete={(id) => {
+              deleteAssignment(id);
+              setSelected(null);
+            }}
+            copyLink={copyLink}
+          />
+        </Modal>
       )}
     </div>
   );
