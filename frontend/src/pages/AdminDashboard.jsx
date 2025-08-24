@@ -1,14 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/admin-dashboard.css';
+
+import NavBar from '../components/admin/NavBar';
+import Assignments from '../components/admin/Assignments';
+import Classes from '../components/admin/Classes';
+import Statistics from '../components/admin/Statistics';
+import Settings from '../components/admin/Settings';
 
 // simple api helper with session header
 function useApi() {
   const base = '';
-  async function get(url) {
+  function buildHeaders() {
     const sessionId = localStorage.getItem('adminSession') || '';
+    return {
+      'x-session-id': sessionId,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async function request(url, options = {}) {
     const res = await fetch(`${base}${url}`, {
-      headers: { 'x-session-id': sessionId }
+      ...options,
+      headers: { ...buildHeaders(), ...(options.headers || {}) }
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -18,94 +32,42 @@ function useApi() {
     }
     return res.json();
   }
-  return { get };
+
+  return {
+    get: (url) => request(url),
+    post: (url, body) => request(url, { method: 'POST', body: JSON.stringify(body) }),
+    del: (url) => request(url, { method: 'DELETE' })
+  };
 }
 
 export default function AdminDashboard() {
   const api = useApi();
-  const [assignments, setAssignments] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [tab, setTab] = useState('assignments');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let mounted = true;
+  async function logout() {
     const sid = localStorage.getItem('adminSession');
-    if (!sid) {
-      setLoading(false);
-      navigate('/admin/login', { replace: true });
-      return () => { mounted = false; };
-    }
-    (async () => {
+    if (sid) {
       try {
-        const data = await api.get('/admin/assignments');
-        if (!mounted) return;
-        setAssignments(data.assignments || []);
-      } catch (e) {
-        if (e && e.status === 401) {
-          localStorage.removeItem('adminSession');
-          navigate('/admin/login', { replace: true });
-          return;
-        }
-        setError(e.message);
-      } finally {
-        if (mounted) setLoading(false);
+        await api.post('/admin/logout', {});
+      } catch {
+        // ignore logout errors
       }
-    })();
-    return () => { mounted = false; };
-  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function openAssignment(a) {
-    setSelected(null);
-    try {
-      const detail = await api.get(`/admin/assignments/${a.id}`);
-      setSelected(detail);
-    } catch (e) {
-      if (e && e.status === 401) {
-        localStorage.removeItem('adminSession');
-        navigate('/admin/login', { replace: true });
-        return;
-      }
-      setError(e.message);
     }
+    localStorage.removeItem('adminSession');
+    navigate('/admin/login', { replace: true });
   }
 
   return (
-    <div className="admin-dashboard">
-      <header className="admin-header">
-        <h1>作业管理</h1>
-      </header>
-      <div className="admin-main">
-        <div className="assignment-list">
-          {loading && <p>加载中...</p>}
-          {error && <p className="error">{error}</p>}
-          {!loading && !error && assignments.map(a => (
-            <div key={a.id} className="assignment-item" onClick={() => openAssignment(a)}>
-              <h3>{a.title}</h3>
-              <p className="assignment-meta">
-                {a.dueDate ? new Date(a.dueDate).toLocaleString() : '无截止时间'}
-              </p>
-            </div>
-          ))}
-        </div>
-        {selected && (
-          <div className="assignment-detail">
-            <div className="detail-header">
-              <button className="btn-close" onClick={() => setSelected(null)}>&times;</button>
-              <h2>{selected.title}</h2>
-            </div>
-            {selected.description && (
-              <p className="detail-description">{selected.description}</p>
-            )}
-            <ul className="detail-list">
-              <li><strong>截止时间：</strong>{selected.dueDate ? new Date(selected.dueDate).toLocaleString() : '无'}</li>
-              <li><strong>题目数：</strong>{selected.questions ? selected.questions.length : 0}</li>
-              <li><strong>状态：</strong>{selected.status || '未知'}</li>
-            </ul>
-          </div>
-        )}
-      </div>
+    <div className="admin-layout">
+      <NavBar tab={tab} onTabChange={setTab} onLogout={logout} />
+      <main className="admin-main">
+        {tab === 'assignments' && <Assignments api={api} />}
+        {tab === 'classes' && <Classes api={api} />}
+        {tab === 'statistics' && <Statistics api={api} />}
+        {tab === 'settings' && <Settings />}
+      </main>
     </div>
   );
 }
+
