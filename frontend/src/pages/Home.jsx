@@ -28,33 +28,39 @@ export default function Home() {
   };
 
   return (
-    <div className="container">
+    <div className="min-h-screen" style={{ backgroundColor: '#f7fbff' }}>
       <header className="header">
         <div className="header-content">
           <div className="logo">
             <i className="material-icons">school</i>
             <h1>FirePolEd-Hub</h1>
           </div>
-          <p className="subtitle">智能作业收交平台</p>
+          <p className="subtitle">智能作业收交平台 · 让教学更简单</p>
         </div>
       </header>
 
       <main className="main-content">
+        
+
         <div className="action-section">
-          <div className="action-cards">
+          <div className="action-cards grid grid-cols-1 sm:grid-cols-2 gap-6">
             <ActionCard
               icon="admin_panel_settings"
               title="管理后台"
               description="创建和管理作业，查看学生提交情况和统计数据"
               onClick={() => navigate('/admin')}
+              gradient={false}
             >
-              <button className="btn btn-primary">进入管理后台</button>
+              <button className="btn btn-secondary">
+                <i className="material-icons">arrow_forward</i>
+                进入管理后台
+              </button>
             </ActionCard>
 
             <ActionCard
               icon="assignment"
               title="学生答题"
-              description="输入作业链接或ID开始答题"
+              description="输入作业链接或ID开始答题，享受流畅的答题体验"
             >
               <AssignmentInput
                 value={assignmentId}
@@ -64,6 +70,8 @@ export default function Home() {
             </ActionCard>
           </div>
         </div>
+
+        
       </main>
     </div>
   );

@@ -116,7 +116,7 @@ export default function AssignmentForm({ api, onCreated, onCancel }) {
     setSaving(true);
     setError('');
     try {
-      await api.post('/admin/assignments', {
+      await api.post('/admin/api/assignments', {
         title: title.trim(),
         description: description.trim(),
         dueDate: dueDate || null,

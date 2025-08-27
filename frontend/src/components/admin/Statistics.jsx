@@ -11,13 +11,13 @@ export default function Statistics({ api }) {
     (async () => {
       try {
         const s = await api.get('/api/stats');
-        const a = await api.get('/admin/assignments');
+        const a = await api.get('/admin/api/assignments');
         const recent = [];
         if (a.assignments) {
           for (const asg of a.assignments) {
             try {
               const detail = await api.get(
-                `/admin/assignments/${asg.id}/statistics`
+                `/admin/api/assignments/${asg.id}/statistics`
               );
               detail.submissions.forEach((sub) =>
                 recent.push({ ...sub, assignmentTitle: asg.title })

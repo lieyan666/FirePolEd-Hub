@@ -38,6 +38,8 @@ const studentRoutes = require('./routes/student');
 const apiRoutes = require('./routes/api');
 
 app.use('/admin', adminRoutes);
+// Mount API-friendly namespace to avoid clashing with SPA routes
+app.use('/admin/api', adminRoutes);
 app.use('/student', studentRoutes);
 app.use('/api', apiRoutes);
 

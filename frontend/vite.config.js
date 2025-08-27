@@ -8,8 +8,10 @@ export default defineConfig({
     proxy: {
       // Proxy backend routes to Express server during development
       '/api': 'http://localhost:3000',
-      '/admin': 'http://localhost:3000',
-      '/student': 'http://localhost:3000',
+      // Narrow admin proxy to API only to avoid hijacking SPA routes
+      '/admin/api': 'http://localhost:3000',
+      // Narrow student proxy to API only to avoid hijacking SPA routes
+      '/student/api': 'http://localhost:3000',
       '/public': 'http://localhost:3000'
     }
   }
