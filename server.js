@@ -37,9 +37,9 @@ const adminRoutes = require('./routes/admin');
 const studentRoutes = require('./routes/student');
 const apiRoutes = require('./routes/api');
 
-app.use('/admin', adminRoutes);
-// Mount API-friendly namespace to avoid clashing with SPA routes
-app.use('/admin/api', adminRoutes);
+// Mount routes with proper namespacing
+app.use('/admin/api', adminRoutes);  // Admin API endpoints
+app.use('/admin', express.static(path.join(__dirname, 'public/admin'))); // Admin static files
 app.use('/student', studentRoutes);
 app.use('/api', apiRoutes);
 

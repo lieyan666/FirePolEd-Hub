@@ -6,28 +6,60 @@ const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 // Use shared configuration loader
 const config = require('../config');
+const RateLimiter = require('../utils/rateLimiter');
+const WriteTracker = require('../utils/writeTracker');
+
+// Initialize utilities
+const rateLimiter = new RateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 30 // 30 requests per minute for students
+});
+
+const writeTracker = new WriteTracker();
+
+// Apply rate limiting to student routes
+router.use(rateLimiter.middleware());
 
 // 工具函数
 const readJsonFile = (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    }
-    return null;
-  } catch (error) {
-    console.error('读取文件错误:', error);
-    return null;
-  }
+  return writeTracker.readJsonFile(filePath);
 };
 
-const writeJsonFile = (filePath, data) => {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('写入文件错误:', error);
-    return false;
+const writeJsonFile = async (filePath, data, metadata = {}) => {
+  const result = await writeTracker.writeJsonFile(filePath, data, metadata);
+  return result.success;
+};
+
+// Student info validation
+const validateStudentInfo = (studentInfo) => {
+  const errors = [];
+  
+  if (!studentInfo || typeof studentInfo !== 'object') {
+    return ['学生信息格式错误'];
   }
+  
+  // Validate name
+  if (!studentInfo.name || typeof studentInfo.name !== 'string') {
+    errors.push('姓名不能为空');
+  } else if (studentInfo.name.trim().length < 2 || studentInfo.name.trim().length > 20) {
+    errors.push('姓名长度必须在2-20个字符之间');
+  }
+  
+  // Validate student ID
+  if (!studentInfo.studentId || typeof studentInfo.studentId !== 'string') {
+    errors.push('学号不能为空');
+  } else if (!/^[0-9a-zA-Z]{6,20}$/.test(studentInfo.studentId.trim())) {
+    errors.push('学号格式不正确（只能包含数字和字母，6-20位）');
+  }
+  
+  // Validate class name
+  if (!studentInfo.className || typeof studentInfo.className !== 'string') {
+    errors.push('班级不能为空');
+  } else if (studentInfo.className.trim().length < 1 || studentInfo.className.trim().length > 50) {
+    errors.push('班级名称长度不能超过50个字符');
+  }
+  
+  return errors;
 };
 
 // 学生主页
@@ -84,11 +116,14 @@ router.get('/api/:assignmentId', (req, res) => {
 });
 
 // 提交作业
-router.post('/api/:assignmentId/submit', (req, res) => {
+router.post('/api/:assignmentId/submit', async (req, res) => {
   const { studentInfo, answers } = req.body;
   
-  if (!studentInfo || !studentInfo.name || !studentInfo.className) {
-    return res.status(400).json({ error: '学生信息不完整' });
+  // Validate student information
+  const validationErrors = validateStudentInfo(studentInfo);
+  if (validationErrors.length > 0) {
+    console.log(`Student submission validation failed from IP ${req.ip}: ${validationErrors.join(', ')}`);
+    return res.status(400).json({ error: validationErrors[0] });
   }
   
   if (!answers || Object.keys(answers).length === 0) {
@@ -119,13 +154,17 @@ router.post('/api/:assignmentId/submit', (req, res) => {
     return res.status(500).json({ error: '提交数据文件不存在' });
   }
   
-  // 检查是否已经提交过
+  // 检查是否已经提交过（使用学号和姓名双重检查）
   const existingSubmission = submissionData.submissions.find(
-    sub => sub.studentInfo.name === studentInfo.name && 
-           sub.studentInfo.className === studentInfo.className
+    sub => (
+      sub.studentInfo.studentId === studentInfo.studentId ||
+      (sub.studentInfo.name === studentInfo.name && 
+       sub.studentInfo.className === studentInfo.className)
+    )
   );
   
   if (existingSubmission) {
+    console.log(`Duplicate submission attempt from IP ${req.ip}: student ${studentInfo.studentId || studentInfo.name}`);
     return res.status(409).json({ error: '您已经提交过此作业' });
   }
   
@@ -194,7 +233,13 @@ router.post('/api/:assignmentId/submit', (req, res) => {
   submissionData.statistics.averageScore = scores.length > 0 ? 
     Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
   
-  if (!writeJsonFile(submissionFile, submissionData)) {
+  if (!(await writeJsonFile(submissionFile, submissionData, { 
+    type: 'submission', 
+    operation: 'student_submit',
+    studentId: studentInfo.studentId,
+    assignmentId: req.params.assignmentId
+  }))) {
+    console.error(`Failed to save student submission for assignment ${req.params.assignmentId} from IP ${req.ip}`);
     return res.status(500).json({ error: '保存提交失败' });
   }
   
@@ -203,8 +248,10 @@ router.post('/api/:assignmentId/submit', (req, res) => {
   const assignmentIndex = indexData.assignments.findIndex(a => a.id === req.params.assignmentId);
   if (assignmentIndex !== -1) {
     indexData.assignments[assignmentIndex].submissionCount = submissionData.submissions.length;
-    writeJsonFile(config.data.assignmentsIndex, indexData);
+    await writeJsonFile(config.data.assignmentsIndex, indexData, { type: 'index', operation: 'submission_count_update' });
   }
+  
+  console.log(`Student submission successful: assignment ${req.params.assignmentId}, student ${studentInfo.studentId || studentInfo.name} from IP ${req.ip}`);
   
   res.json({ 
     success: true, 
@@ -218,9 +265,10 @@ router.post('/api/:assignmentId/submit', (req, res) => {
 
 // 检查学生是否已提交
 router.get('/api/:assignmentId/check-submission', (req, res) => {
-  const { name, className } = req.query;
+  const { name, className, studentId } = req.query;
   
-  if (!name || !className) {
+  if ((!name || !className) && !studentId) {
+    console.log(`Check submission request failed from IP ${req.ip}: missing student info`);
     return res.status(400).json({ error: '缺少学生信息' });
   }
   
@@ -232,8 +280,13 @@ router.get('/api/:assignmentId/check-submission', (req, res) => {
   }
   
   const existingSubmission = submissionData.submissions.find(
-    sub => sub.studentInfo.name === name && 
-           sub.studentInfo.className === className
+    sub => {
+      if (studentId) {
+        return sub.studentInfo.studentId === studentId;
+      }
+      return sub.studentInfo.name === name && 
+             sub.studentInfo.className === className;
+    }
   );
   
   if (existingSubmission) {

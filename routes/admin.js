@@ -6,37 +6,32 @@ const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 // Use shared configuration loader
 const config = require('../config');
-const crypto = require('crypto');
+const SessionManager = require('../utils/sessionManager');
+const RateLimiter = require('../utils/rateLimiter');
+const WriteTracker = require('../utils/writeTracker');
 
-// 会话存储（生产环境建议使用 Redis 或数据库）
-const sessions = new Map();
+// Initialize utilities
+const sessionManager = new SessionManager({
+  sessionTimeout: config.admin.sessionTimeout,
+  sessionFile: path.join(__dirname, '../data/admin-sessions.json')
+});
 
-// 生成会话ID
-const generateSessionId = () => {
-  return crypto.randomBytes(32).toString('hex');
-};
+const rateLimiter = new RateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 100 // 100 requests per minute for admin
+});
 
-// 验证会话
-const verifySession = (sessionId) => {
-  const session = sessions.get(sessionId);
-  if (!session) return false;
-  
-  // 检查会话是否过期
-  if (Date.now() - session.createdAt > config.admin.sessionTimeout) {
-    sessions.delete(sessionId);
-    return false;
-  }
-  
-  // 更新最后访问时间
-  session.lastAccess = Date.now();
-  return true;
-};
+const writeTracker = new WriteTracker();
+
+// Apply rate limiting to all admin routes
+router.use(rateLimiter.middleware());
 
 // 认证中间件
 const requireAuth = (req, res, next) => {
   const sessionId = req.headers['x-session-id'] || req.query.sessionId;
   
-  if (!sessionId || !verifySession(sessionId)) {
+  if (!sessionId || !sessionManager.verifySession(sessionId)) {
+    console.log(`Authentication failed for IP ${req.ip}: invalid session`);
     return res.status(401).json({ error: '未授权访问，请先登录' });
   }
   
@@ -45,53 +40,51 @@ const requireAuth = (req, res, next) => {
 
 // 工具函数
 const readJsonFile = (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    }
-    return null;
-  } catch (error) {
-    console.error('读取文件错误:', error);
-    return null;
-  }
+  return writeTracker.readJsonFile(filePath);
 };
 
-const writeJsonFile = (filePath, data) => {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('写入文件错误:', error);
-    return false;
-  }
+const writeJsonFile = async (filePath, data, metadata = {}) => {
+  const result = await writeTracker.writeJsonFile(filePath, data, metadata);
+  return result.success;
 };
 
 // 登录接口
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { password } = req.body;
   
   if (!password) {
+    console.log(`Login attempt failed from IP ${req.ip}: no password provided`);
     return res.status(400).json({ error: '请输入密码' });
   }
   
-  if (password !== config.admin.password) {
+  // Use crypto.timingSafeEqual to prevent timing attacks
+  const providedPassword = Buffer.from(password, 'utf8');
+  const correctPassword = Buffer.from(config.admin.password, 'utf8');
+  
+  if (providedPassword.length !== correctPassword.length || 
+      !require('crypto').timingSafeEqual(providedPassword, correctPassword)) {
+    console.log(`Login attempt failed from IP ${req.ip}: incorrect password`);
     return res.status(401).json({ error: '密码错误' });
   }
   
-  // 创建会话
-  const sessionId = generateSessionId();
-  sessions.set(sessionId, {
-    createdAt: Date.now(),
-    lastAccess: Date.now(),
-    userAgent: req.headers['user-agent'] || '',
-    ip: req.ip || req.connection.remoteAddress
-  });
-  
-  res.json({ 
-    success: true, 
-    sessionId,
-    expiresIn: config.admin.sessionTimeout
-  });
+  try {
+    // 创建会话
+    const { sessionId } = sessionManager.createSession(
+      req.headers['user-agent'] || '', 
+      req.ip || req.connection.remoteAddress
+    );
+    
+    console.log(`Admin login successful from IP ${req.ip}`);
+    
+    res.json({ 
+      success: true, 
+      sessionId,
+      expiresIn: config.admin.sessionTimeout
+    });
+  } catch (error) {
+    console.error(`Session creation failed for IP ${req.ip}: ${error.message}`);
+    return res.status(500).json({ error: '登录失败，请稍后重试' });
+  }
 });
 
 // 登出接口
@@ -99,7 +92,8 @@ router.post('/logout', (req, res) => {
   const sessionId = req.headers['x-session-id'] || req.body.sessionId;
   
   if (sessionId) {
-    sessions.delete(sessionId);
+    sessionManager.deleteSession(sessionId);
+    console.log(`Admin logout from IP ${req.ip}`);
   }
   
   res.json({ success: true });
@@ -109,11 +103,12 @@ router.post('/logout', (req, res) => {
 router.get('/verify', (req, res) => {
   const sessionId = req.headers['x-session-id'] || req.query.sessionId;
   
-  if (!sessionId || !verifySession(sessionId)) {
+  if (!sessionId || !sessionManager.verifySession(sessionId)) {
+    console.log(`Session verification failed from IP ${req.ip}: invalid session`);
     return res.status(401).json({ error: '会话无效或已过期' });
   }
   
-  const session = sessions.get(sessionId);
+  const session = sessionManager.getSessionInfo(sessionId);
   res.json({ 
     success: true,
     session: {
@@ -144,7 +139,7 @@ router.get('/assignments', requireAuth, (req, res) => {
 });
 
 // 创建新作业
-router.post('/assignments', requireAuth, (req, res) => {
+router.post('/assignments', requireAuth, async (req, res) => {
   const { title, description, dueDate, questions } = req.body;
   
   if (!title || !questions || questions.length === 0) {
@@ -173,7 +168,8 @@ router.post('/assignments', requireAuth, (req, res) => {
   
   // 保存作业详情
   const assignmentFile = path.join(config.data.assignmentsDir, `${assignmentId}.json`);
-  if (!writeJsonFile(assignmentFile, assignmentData)) {
+  if (!(await writeJsonFile(assignmentFile, assignmentData, { type: 'assignment', operation: 'create' }))) {
+    console.error(`Failed to save assignment ${assignmentId} to ${assignmentFile}`);
     return res.status(500).json({ error: '保存作业失败' });
   }
   
@@ -190,7 +186,8 @@ router.post('/assignments', requireAuth, (req, res) => {
   };
   
   const submissionFile = path.join(config.data.submissionsDir, `${assignmentId}.json`);
-  if (!writeJsonFile(submissionFile, submissionData)) {
+  if (!(await writeJsonFile(submissionFile, submissionData, { type: 'submission', operation: 'create' }))) {
+    console.error(`Failed to create submission file ${submissionFile}`);
     return res.status(500).json({ error: '创建提交文件失败' });
   }
   
@@ -208,9 +205,12 @@ router.post('/assignments', requireAuth, (req, res) => {
   indexData.metadata.totalAssignments++;
   indexData.metadata.lastUpdated = now;
   
-  if (!writeJsonFile(config.data.assignmentsIndex, indexData)) {
+  if (!(await writeJsonFile(config.data.assignmentsIndex, indexData, { type: 'index', operation: 'update' }))) {
+    console.error(`Failed to update assignments index`);
     return res.status(500).json({ error: '更新索引失败' });
   }
+  
+  console.log(`Assignment created successfully: ${assignmentId} by IP ${req.ip}`);
   
   res.json({ 
     success: true, 
@@ -265,7 +265,7 @@ router.get('/assignments/:id/statistics', requireAuth, (req, res) => {
 });
 
 // 更新作业
-router.put('/assignments/:id', requireAuth, (req, res) => {
+router.put('/assignments/:id', requireAuth, async (req, res) => {
   const assignmentFile = path.join(config.data.assignmentsDir, `${req.params.id}.json`);
   const assignmentData = readJsonFile(assignmentFile);
   
@@ -283,7 +283,8 @@ router.put('/assignments/:id', requireAuth, (req, res) => {
   if (status) assignmentData.status = status;
   assignmentData.updatedAt = moment().format();
   
-  if (!writeJsonFile(assignmentFile, assignmentData)) {
+  if (!(await writeJsonFile(assignmentFile, assignmentData, { type: 'assignment', operation: 'update' }))) {
+    console.error(`Failed to update assignment ${req.params.id}`);
     return res.status(500).json({ error: '更新作业失败' });
   }
   
@@ -299,14 +300,16 @@ router.put('/assignments/:id', requireAuth, (req, res) => {
       status: assignmentData.status
     };
     indexData.metadata.lastUpdated = assignmentData.updatedAt;
-    writeJsonFile(config.data.assignmentsIndex, indexData);
+    await writeJsonFile(config.data.assignmentsIndex, indexData, { type: 'index', operation: 'update' });
   }
+  
+  console.log(`Assignment updated successfully: ${req.params.id} by IP ${req.ip}`);
   
   res.json({ success: true });
 });
 
 // 删除作业
-router.delete('/assignments/:id', requireAuth, (req, res) => {
+router.delete('/assignments/:id', requireAuth, async (req, res) => {
   const assignmentFile = path.join(config.data.assignmentsDir, `${req.params.id}.json`);
   const submissionFile = path.join(config.data.submissionsDir, `${req.params.id}.json`);
   
@@ -321,11 +324,56 @@ router.delete('/assignments/:id', requireAuth, (req, res) => {
     indexData.metadata.totalAssignments--;
     indexData.metadata.lastUpdated = moment().format();
     
-    writeJsonFile(config.data.assignmentsIndex, indexData);
+    await writeJsonFile(config.data.assignmentsIndex, indexData, { type: 'index', operation: 'delete' });
     
+    console.log(`Assignment deleted successfully: ${req.params.id} by IP ${req.ip}`);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Failed to delete assignment ${req.params.id}: ${error.message}`);
     res.status(500).json({ error: '删除作业失败' });
+  }
+});
+
+// Admin monitoring endpoints
+router.get('/system/status', requireAuth, async (req, res) => {
+  try {
+    const sessionStats = sessionManager.getStats();
+    const rateLimitStats = rateLimiter.getStats();
+    const writeStats = await writeTracker.getOperationStats(24);
+    const failedOps = await writeTracker.getFailedOperations(24);
+    
+    console.log(`System status checked by IP ${req.ip}`);
+    
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      sessions: sessionStats,
+      rateLimit: rateLimitStats,
+      writeOperations: writeStats,
+      recentFailures: failedOps.length,
+      version: '1.1.0'
+    });
+  } catch (error) {
+    console.error(`System status check failed: ${error.message}`);
+    res.status(500).json({ error: '系统状态检查失败' });
+  }
+});
+
+router.get('/system/failed-operations', requireAuth, async (req, res) => {
+  try {
+    const hours = parseInt(req.query.hours) || 24;
+    const failedOps = await writeTracker.getFailedOperations(hours);
+    
+    console.log(`Failed operations report requested by IP ${req.ip} for ${hours} hours`);
+    
+    res.json({
+      period: `${hours}h`,
+      count: failedOps.length,
+      operations: failedOps
+    });
+  } catch (error) {
+    console.error(`Failed to get failed operations report: ${error.message}`);
+    res.status(500).json({ error: '获取失败操作报告失败' });
   }
 });
 

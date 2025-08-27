@@ -4,34 +4,28 @@ const path = require('path');
 const fs = require('fs');
 // Use shared configuration loader
 const config = require('../config');
+const RateLimiter = require('../utils/rateLimiter');
+const WriteTracker = require('../utils/writeTracker');
+
+// Initialize utilities
+const rateLimiter = new RateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 60 // 60 requests per minute for general API
+});
+
+const writeTracker = new WriteTracker();
+
+// Apply rate limiting
+router.use(rateLimiter.middleware());
 
 // 工具函数
 const readJsonFile = (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    }
-    return null;
-  } catch (error) {
-    console.error('读取文件错误:', error);
-    return null;
-  }
+  return writeTracker.readJsonFile(filePath);
 };
 
-const writeJsonFile = (filePath, data) => {
-  try {
-    // 确保目录存在
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('写入文件错误:', error);
-    return false;
-  }
+const writeJsonFile = async (filePath, data, metadata = {}) => {
+  const result = await writeTracker.writeJsonFile(filePath, data, metadata);
+  return result.success;
 };
 
 // 获取系统配置
@@ -61,7 +55,7 @@ router.get('/classes', (req, res) => {
 });
 
 // 更新班级列表（管理员功能）
-router.put('/classes', (req, res) => {
+router.put('/classes', async (req, res) => {
   const { classes } = req.body;
   
   if (!Array.isArray(classes)) {
@@ -76,15 +70,17 @@ router.put('/classes', (req, res) => {
     }
   };
   
-  if (writeJsonFile(config.data.classesFile, classesData)) {
+  if (await writeJsonFile(config.data.classesFile, classesData, { type: 'classes', operation: 'bulk_update' })) {
+    console.log(`Classes updated successfully by IP ${req.ip}`);
     res.json({ success: true, message: '班级列表更新成功' });
   } else {
+    console.error(`Failed to update classes from IP ${req.ip}`);
     res.status(500).json({ error: '保存班级数据失败' });
   }
 });
 
 // 添加班级
-router.post('/classes', (req, res) => {
+router.post('/classes', async (req, res) => {
   const { className } = req.body;
   
   if (!className || typeof className !== 'string') {
@@ -106,15 +102,17 @@ router.post('/classes', (req, res) => {
     totalClasses: classesData.classes.length
   };
   
-  if (writeJsonFile(config.data.classesFile, classesData)) {
+  if (await writeJsonFile(config.data.classesFile, classesData, { type: 'classes', operation: 'add', className })) {
+    console.log(`Class added successfully: ${className} by IP ${req.ip}`);
     res.json({ success: true, message: '班级添加成功' });
   } else {
+    console.error(`Failed to add class ${className} from IP ${req.ip}`);
     res.status(500).json({ error: '保存班级数据失败' });
   }
 });
 
 // 删除班级
-router.delete('/classes/:className', (req, res) => {
+router.delete('/classes/:className', async (req, res) => {
   const { className } = req.params;
   
   const classesData = readJsonFile(config.data.classesFile);
@@ -133,9 +131,11 @@ router.delete('/classes/:className', (req, res) => {
     totalClasses: classesData.classes.length
   };
   
-  if (writeJsonFile(config.data.classesFile, classesData)) {
+  if (await writeJsonFile(config.data.classesFile, classesData, { type: 'classes', operation: 'delete', className })) {
+    console.log(`Class deleted successfully: ${className} by IP ${req.ip}`);
     res.json({ success: true, message: '班级删除成功' });
   } else {
+    console.error(`Failed to delete class ${className} from IP ${req.ip}`);
     res.status(500).json({ error: '保存班级数据失败' });
   }
 });
@@ -220,7 +220,7 @@ router.get('/export/:assignmentId', (req, res) => {
 });
 
 // 批量操作接口
-router.post('/batch', (req, res) => {
+router.post('/batch', async (req, res) => {
   const { operation, assignmentIds } = req.body;
   
   if (!operation || !assignmentIds || !Array.isArray(assignmentIds)) {
@@ -242,7 +242,7 @@ router.post('/batch', (req, res) => {
           assignmentData.status = newStatus;
           assignmentData.updatedAt = new Date().toISOString();
           
-          if (writeJsonFile(assignmentFile, assignmentData)) {
+          if (await writeJsonFile(assignmentFile, assignmentData, { type: 'assignment', operation: 'batch_status_update' })) {
             results.push({ id, success: true });
           } else {
             results.push({ id, success: false, error: '写入失败' });
