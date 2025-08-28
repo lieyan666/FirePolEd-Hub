@@ -733,7 +733,7 @@ const selectedSubmission = selectedIndex != null ? filteredSubmissions[selectedI
                 </div>
                 <div className="student-score">
                   <span className="score-value">{selectedSubmission.percentage}%</span>
-                  {selectedSubmission.isLate && <span className="badge warning">迟交</span>}
+                  {selectedSubmission.isLate && <span className="badge warning compact">迟交</span>}
                 </div>
               </div>
               <div className="student-time-info">

@@ -234,7 +234,7 @@ router.post('/batch', async (req, res) => {
     case 'deactivate':
       const newStatus = operation === 'activate' ? 'active' : 'inactive';
       
-      assignmentIds.forEach(id => {
+      for (const id of assignmentIds) {
         const assignmentFile = path.join(config.data.assignmentsDir, `${id}.json`);
         const assignmentData = readJsonFile(assignmentFile);
         
@@ -250,7 +250,7 @@ router.post('/batch', async (req, res) => {
         } else {
           results.push({ id, success: false, error: '作业不存在' });
         }
-      });
+      }
       break;
       
     default:
